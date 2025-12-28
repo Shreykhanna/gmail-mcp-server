@@ -3,7 +3,7 @@ import process from "node:process";
 import { authenticate } from "@google-cloud/local-auth";
 import { google } from "googleapis";
 import fs from "node:fs";
-import { getEmailBody } from "../getEmailBody.js";
+import { getEmailBody } from "../helper/getEmailBody.js";
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
 

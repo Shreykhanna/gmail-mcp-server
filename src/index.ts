@@ -1,9 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { listLabels } from "./helper/read/readGmail.js";
-import { readGmail } from "./helper/read/readGmail.js";
-import { createDraftEmail } from "./helper/draft/draftEmail.js";
-import { sendEmail } from "./helper/send/sendEmail.js";
+import { listLabels } from "./read/readGmail.js";
+import { readGmail } from "./read/readGmail.js";
+import { createDraftEmail } from "./draft/draftEmail.js";
+import { sendEmail } from "./send/sendEmail.js";
 import z from "zod";
 
 const server = new McpServer(
