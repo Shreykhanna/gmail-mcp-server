@@ -5,6 +5,26 @@ import { readGmail } from "./read/readGmail.js";
 import { createDraftEmail } from "./draft/draftEmail.js";
 import { sendEmail } from "./send/sendEmail.js";
 import z from "zod";
+import path from "node:path";
+import fs from "node:fs";
+import { authenticate } from "@google-cloud/local-auth";
+
+const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
+
+const CREDENTIALS_PATH = path.join(
+  process.cwd(),
+  "credentials",
+  "credentials.json"
+);
+const auth = await authenticate({
+  keyfilePath: CREDENTIALS_PATH,
+  scopes: SCOPES,
+});
+
+if (!fs.existsSync(CREDENTIALS_PATH)) {
+  console.error("Credentials file not found:", CREDENTIALS_PATH);
+  process.exit(1);
+}
 
 const server = new McpServer(
   {
@@ -24,7 +44,7 @@ server.registerTool(
     description: "List Gmail labels using Gmail API",
   },
   async () => {
-    const labelsData = await listLabels();
+    const labelsData = await listLabels(auth);
     return {
       content: [
         {
@@ -42,7 +62,7 @@ server.registerTool(
     description: "Read emails from Gmail using Gmail API",
   },
   async () => {
-    const mailContent = await readGmail();
+    const mailContent = await readGmail(auth);
     return {
       content: [
         {

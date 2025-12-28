@@ -1,29 +1,11 @@
 import path from "node:path";
 import process from "node:process";
-import { authenticate } from "@google-cloud/local-auth";
 import { google } from "googleapis";
-import fs from "node:fs";
 import { getEmailBody } from "../helper/getEmailBody.js";
+import { OAuth2Client } from "google-auth-library";
 
-const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
-
-const CREDENTIALS_PATH = path.join(
-  process.cwd(),
-  "credentials",
-  "credentials.json"
-);
-
-if (!fs.existsSync(CREDENTIALS_PATH)) {
-  console.error("Credentials file not found:", CREDENTIALS_PATH);
-  process.exit(1);
-}
-
-export const readGmail = async () => {
+export const readGmail = async (auth: OAuth2Client) => {
   try {
-    const auth = await authenticate({
-      keyfilePath: CREDENTIALS_PATH,
-      scopes: SCOPES,
-    });
     const gmail = google.gmail({ version: "v1", auth });
     const res = await gmail.users.messages.list({
       userId: "me",
@@ -68,11 +50,7 @@ export const readGmail = async () => {
   }
 };
 
-export async function listLabels() {
-  const auth = await authenticate({
-    keyfilePath: CREDENTIALS_PATH,
-    scopes: SCOPES,
-  });
+export async function listLabels(auth: OAuth2Client) {
   const gmail = google.gmail({ version: "v1", auth });
 
   const result = await gmail.users.labels.list({ userId: "me" });
@@ -83,5 +61,3 @@ export async function listLabels() {
   }
   console.error("Labels:", labels);
 }
-
-await readGmail();
