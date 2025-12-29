@@ -5,26 +5,10 @@ import { readGmail } from "./read/readGmail.js";
 import { createDraftEmail } from "./draft/draftEmail.js";
 import { sendEmail } from "./send/sendEmail.js";
 import z from "zod";
-import path from "node:path";
-import fs from "node:fs";
-import { authenticate } from "@google-cloud/local-auth";
+import { getOAuth2Client } from "./auth/auth.js";
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
-
-const CREDENTIALS_PATH = path.join(
-  process.cwd(),
-  "credentials",
-  "credentials.json"
-);
-const auth = await authenticate({
-  keyfilePath: CREDENTIALS_PATH,
-  scopes: SCOPES,
-});
-
-if (!fs.existsSync(CREDENTIALS_PATH)) {
-  console.error("Credentials file not found:", CREDENTIALS_PATH);
-  process.exit(1);
-}
+const authClient = await getOAuth2Client();
 
 const server = new McpServer(
   {
@@ -39,12 +23,30 @@ const server = new McpServer(
 );
 
 server.registerTool(
+  "authorise_gmail",
+  {
+    description: "Authorise Gmail API access",
+  },
+  async () => {
+    await getOAuth2Client();
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Gmail API authorised successfully.",
+        },
+      ],
+    };
+  }
+);
+
+server.registerTool(
   "list_gmail_labels",
   {
     description: "List Gmail labels using Gmail API",
   },
   async () => {
-    const labelsData = await listLabels(auth);
+    const labelsData = await listLabels(authClient);
     return {
       content: [
         {
@@ -57,12 +59,12 @@ server.registerTool(
 );
 
 server.registerTool(
-  "read_gmail",
+  "summarise_email",
   {
     description: "Read emails from Gmail using Gmail API",
   },
   async () => {
-    const mailContent = await readGmail(auth);
+    const mailContent = await readGmail(authClient);
     return {
       content: [
         {
