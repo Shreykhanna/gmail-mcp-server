@@ -59,6 +59,29 @@ server.registerTool(
 );
 
 server.registerTool(
+  "send_email",
+  {
+    description: "Create a draft email in Gmail using Gmail API",
+    inputSchema: z.object({
+      to: z.string().email().describe("Recipient email address"),
+      subject: z.string().describe("Email subject"),
+      body: z.string().describe("Email body content"),
+    }),
+  },
+  async ({ to, subject, body }) => {
+    const response = await sendEmail(to, subject, body, authClient);
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(response.data),
+        },
+      ],
+    };
+  }
+);
+
+server.registerTool(
   "summarise_email",
   {
     description: "Read emails from Gmail using Gmail API",

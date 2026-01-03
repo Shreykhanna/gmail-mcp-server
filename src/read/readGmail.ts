@@ -1,4 +1,3 @@
-import path from "node:path";
 import process from "node:process";
 import { google } from "googleapis";
 import { getEmailBody } from "../helper/getEmailBody.js";
