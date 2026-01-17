@@ -1,0 +1,61 @@
+name: MCP Server CI/CD
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  # --- JOB 1: BUILD ---
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install & Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: build/
+
+  # --- JOB 2: DEPLOY ---
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: prod
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-files
+          path: build/
+
+      - name: Copy to EC2 & Restart
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "build/**,package.json"
+          target: "~/gmail-mcp-server"
+
+      - name: Execute Remote SSH Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/gmail-mcp-server
+            npm ci --omit=dev
+            pm2 restart email-agent || pm2 start build/index.js --name "email-agent"
