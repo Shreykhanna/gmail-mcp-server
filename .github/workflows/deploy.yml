@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-      description: Deploy to prod
-      required: false
-      default: "Manual deploy"
+        description: Deploy to prod
+        required: false
+        default: "Manual deploy"
 jobs:
   deploy:
     runs-on: ubuntu-latest
