@@ -5,7 +5,11 @@ import { authenticate } from "@google-cloud/local-auth";
 
 const CREDENTIALS = path.join(process.cwd(), "credentials", "credentials.json");
 const TOKEN = path.join(process.cwd(), "credentials", "token.json");
-const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
+const SCOPES = [
+  "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/calendar.events",
+];
 
 export async function getOAuth2Client() {
   const creds = JSON.parse(fs.readFileSync(CREDENTIALS, "utf8"));

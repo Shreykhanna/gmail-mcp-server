@@ -6,10 +6,11 @@ import { createDraftEmail } from "./draft/draftEmail.js";
 import { sendEmail } from "./send/sendEmail.js";
 import z from "zod";
 import { getOAuth2Client } from "./auth/auth.js";
+import { OAuth2Client } from "google-auth-library";
+import { listCalendarEvents } from "./calendar/listCalendarEvents.js";
+import { createCalendarEvent } from "./calendar/createCalendarEvents.js";
 
-const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
-const authClient = await getOAuth2Client();
-
+let authClient: OAuth2Client;
 const server = new McpServer(
   {
     name: "Gmail MCP",
@@ -23,12 +24,12 @@ const server = new McpServer(
 );
 
 server.registerTool(
-  "authorise_gmail",
+  "authenticate_gmail",
   {
-    description: "Authorise Gmail API access",
+    description: "Autenticate Gmail API access",
   },
   async () => {
-    await getOAuth2Client();
+    authClient = await getOAuth2Client();
     return {
       content: [
         {
@@ -74,7 +75,7 @@ server.registerTool(
       content: [
         {
           type: "text",
-          text: JSON.stringify(response.data),
+          text: JSON.stringify(response?.data),
         },
       ],
     };
@@ -101,6 +102,58 @@ server.registerTool(
 );
 
 server.registerTool(
+  "list_calendar_events",
+  {
+    description: "List calendar events in Gmail calendar using Gmail API",
+  },
+  async () => {
+    const listEvents = await listCalendarEvents(authClient);
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(listEvents),
+        },
+      ],
+    };
+  }
+);
+
+server.registerTool(
+  "create_calendar_events",
+  {
+    description: "List calendar events in Gmail calendar using Gmail API",
+    inputSchema: z.object({
+      eventDetails: z.object({
+        summary: z.string(),
+        location: z.string(),
+        description: z.string(),
+        startTime: z.string(),
+        endTime: z.string(),
+        attendees: z
+          .array(
+            z.object({
+              email: z.string().email(),
+            })
+          )
+          .default([]),
+      }),
+    }),
+  },
+  async ({ eventDetails }) => {
+    const eventCreated = await createCalendarEvent(authClient, eventDetails);
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(eventCreated),
+        },
+      ],
+    };
+  }
+);
+
+server.registerTool(
   "draft_email",
   {
     description: "Create a draft email in Gmail using Gmail API",
@@ -111,12 +164,7 @@ server.registerTool(
     }),
   },
   async ({ to, subject, body }) => {
-    const draft = await createDraftEmail(
-      process.env.GMAIL_AUTH || "",
-      to,
-      subject,
-      body
-    );
+    const draft = await createDraftEmail(authClient, to, subject, body);
     return {
       content: [
         {

@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { OAuth2Client } from "google-auth-library";
 
 const makeRawEmail = ({
   to,
@@ -26,7 +27,7 @@ const makeRawEmail = ({
 };
 
 export const createDraftEmail = async (
-  auth: string,
+  auth: OAuth2Client,
   to: string,
   subject: string,
   body: string
