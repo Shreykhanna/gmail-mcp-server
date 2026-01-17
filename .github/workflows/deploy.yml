@@ -36,7 +36,7 @@ jobs:
           key: ${{secrets.EC2_SSH_KEY}}
           port: 22
           script: |
-            cd ~/gmail-mcp
+            cd ~/gmail-mcp-server
             git pull origin master
             npm ci
             npm run build
