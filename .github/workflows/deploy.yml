@@ -1,5 +1,5 @@
 name: MCP Server Deploy Action
-run-name: ${{github.actor}}
+run-name: Deploy to prod
 on:
   workflow_dispatch:
     inputs:

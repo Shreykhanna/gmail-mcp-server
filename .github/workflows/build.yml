@@ -1,5 +1,5 @@
 name: MCP Server Build Action
-run-name: ${{github.actor}}
+run-name: Build
 on:
   push:
     branches: [master]
