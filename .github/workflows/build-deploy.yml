@@ -58,4 +58,4 @@ jobs:
           script: |
             cd ~/gmail-mcp-server
             npm ci --omit=dev
-            pm2 restart email-agent || pm2 start build/index.js --name "email-agent"
+            pm2 restart mcp-server || pm2 start build/index.js --name "mcp-server"
