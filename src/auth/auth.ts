@@ -1,5 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 import { google } from "googleapis";
 import { authenticate } from "@google-cloud/local-auth";
 
@@ -17,7 +17,7 @@ export async function getOAuth2Client() {
   const oAuth2 = new google.auth.OAuth2(
     client.client_id,
     client.client_secret,
-    client.redirect_uris?.[0]
+    client.redirect_uris?.[0],
   );
 
   if (fs.existsSync(TOKEN)) {

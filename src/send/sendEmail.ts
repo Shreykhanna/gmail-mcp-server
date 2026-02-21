@@ -5,12 +5,12 @@ export const sendEmail = async (
   to: string,
   subject: string,
   body: string,
-  auth: OAuth2Client
+  auth: OAuth2Client,
 ) => {
   try {
     const gmail = google.gmail({ version: "v1", auth });
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString(
-      "base64"
+      "base64",
     )}?=`;
     const messageParts = [
       `To: ${to}`,

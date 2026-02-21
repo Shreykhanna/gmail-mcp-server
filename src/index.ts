@@ -1,16 +1,18 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { listLabels } from "./read/readGmail.js";
-import { readGmail } from "./read/readGmail.js";
-import { createDraftEmail } from "./draft/draftEmail.js";
-import { sendEmail } from "./send/sendEmail.js";
 import z from "zod";
+import { listLabels, readUnreadGmail } from "./read/readGmail.js";
 import { getOAuth2Client } from "./auth/auth.js";
+import { readGmail } from "./read/readGmail.js";
+import { sendEmail } from "./send/sendEmail.js";
 import { OAuth2Client } from "google-auth-library";
+import { createDraftEmail } from "./draft/draftEmail.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { listCalendarEvents } from "./calendar/listCalendarEvents.js";
 import { createCalendarEvent } from "./calendar/createCalendarEvents.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { google } from "googleapis";
 
 let authClient: OAuth2Client;
+
 const server = new McpServer(
   {
     name: "Gmail MCP",
@@ -20,16 +22,44 @@ const server = new McpServer(
     capabilities: {
       tools: {},
     },
-  }
+  },
 );
 
 server.registerTool(
   "authenticate_gmail",
   {
     description: "Autenticate Gmail API access",
+    inputSchema: z.object({
+      accessToken: z.string(),
+      refreshToken: z.string(),
+      scope: z.string(),
+      expiryAt: z.number(),
+      tokenType: z.string(),
+      clientSecret: z.string(),
+      clientId: z.string(),
+    }),
   },
-  async () => {
-    authClient = await getOAuth2Client();
+  async ({
+    accessToken,
+    refreshToken,
+    scope,
+    expiryAt,
+    tokenType,
+    clientId,
+    clientSecret,
+  }) => {
+    authClient = new google.auth.OAuth2(clientId, clientSecret);
+    const normalizedType = tokenType
+      ? tokenType.charAt(0).toUpperCase() + tokenType.slice(1).toLowerCase()
+      : "Bearer";
+
+    authClient.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      scope: scope,
+      expiry_date: expiryAt,
+      token_type: normalizedType,
+    });
     return {
       content: [
         {
@@ -38,7 +68,7 @@ server.registerTool(
         },
       ],
     };
-  }
+  },
 );
 
 server.registerTool(
@@ -56,7 +86,7 @@ server.registerTool(
         },
       ],
     };
-  }
+  },
 );
 
 server.registerTool(
@@ -79,7 +109,7 @@ server.registerTool(
         },
       ],
     };
-  }
+  },
 );
 
 server.registerTool(
@@ -98,7 +128,26 @@ server.registerTool(
       ],
       structuredContent: mailContent,
     };
-  }
+  },
+);
+
+server.registerTool(
+  "summarise_unread_emails",
+  {
+    description: "Read emails from Gmail using Gmail API",
+  },
+  async () => {
+    const mailContent = await readUnreadGmail(authClient);
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Unread emails fetched from gmail:",
+        },
+      ],
+      structuredContent: mailContent,
+    };
+  },
 );
 
 server.registerTool(
@@ -116,7 +165,7 @@ server.registerTool(
         },
       ],
     };
-  }
+  },
 );
 
 server.registerTool(
@@ -134,7 +183,7 @@ server.registerTool(
           .array(
             z.object({
               email: z.string().email(),
-            })
+            }),
           )
           .default([]),
       }),
@@ -150,7 +199,7 @@ server.registerTool(
         },
       ],
     };
-  }
+  },
 );
 
 server.registerTool(
@@ -173,7 +222,7 @@ server.registerTool(
         },
       ],
     };
-  }
+  },
 );
 
 const main = async () => {
